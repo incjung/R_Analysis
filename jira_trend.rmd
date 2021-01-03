@@ -1,0 +1,169 @@
+---
+title: "Jira Trend"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+#library(stringr)
+
+theme_set(theme_light())
+
+```
+
+
+# JIRA
+
+For this JIRA analysis, we extract all JIRA records related to mapr 
+
+```{r}
+
+all_jira <- read_csv("C:/Users/InchulJung/Downloads/JIRA (8).csv")
+
+
+jira <- all_jira %>%
+  select (Status, Priority, Assignee, Creator, Created, Resolved) %>%
+  mutate(Created = dmy_hm (Created),
+         Resolved = dmy_hm (Resolved))
+
+```
+
+There are 238 columns, But we only concern `Status`, `Priority`, `Assignee`, `Creator`, `Created`, `Resolved`  
+
+```{r}
+
+glimpse(jira)
+
+
+
+```
+
+
+Data features are like : 
+
+```{r}
+
+## preprcessing data - ex) imputate for NA data with today of resolved
+
+jira <- jira %>% 
+  mutate(Status = as.factor(Status),
+         Priority = as.factor(Priority),
+         month = lubridate::month(Created),
+         month = as.factor(month),
+         year = lubridate::year(Created),
+         year = as.factor(year)) %>%
+   mutate (Resolved = case_when(is.na(Resolved) ~ lubridate::now(), 
+                      TRUE ~ Resolved))
+
+
+report_year=2020
+report_month = 12
+
+jira %>%
+  summary() 
+
+```
+
+
+
+# ACC Analysis 
+
+
+## Monthly Trend of JIRA opening
+
+```{r}
+jira %>%  
+  filter (year %in% c(2020)) %>%
+  ggplot(aes(month, fill=month)) +  geom_bar(show.legend = FALSE) + 
+  facet_wrap(~year) + 
+  labs(title= "JIRA Creating Trend per month")
+  
+```
+### JIRA status
+```{r}
+
+jira %>% 
+  filter (year %in% c(2020)) %>%
+  ggplot(aes(month,fill=Status)) + geom_bar(position=position_dodge( preserve = c("single"))) + facet_wrap(~year) +
+  labs(title= "Status Trend per month")
+```
+
+
+```{r}
+jira %>%
+  ggplot(aes(month, fill=Status)) + geom_bar()
+
+jira %>% 
+  ggplot(aes(Status, fill=Status)) + geom_bar(show.legend = FALSE) + 
+  coord_flip() + 
+  facet_wrap(year~month, nrow = 2) +
+  labs(title= "Status Trend per month")
+
+```
+
+
+## JIRA Priority
+```{r}
+
+jira %>% 
+  ggplot(aes(month, fill=Priority)) + geom_bar() + facet_wrap(~year, nrow=2) + labs(title= "Priority Trend per month")
+
+
+```
+
+
+## JIRA Creators
+```{r JIRA Creators, eval=FALSE, include=FALSE}
+
+jira %>% 
+  count(year, month, Assignee, sort=TRUE) %>% na.omit() %>% 
+  ggplot(aes(n, fct_reorder(Assignee,n), fill=Assignee)) + geom_col() + facet_wrap(~month) + 
+  labs(x="", 
+       y="",
+       title = "The most assinged person per month")
+
+```
+
+```{r}
+jira %>% 
+  filter(Assignee %in% c("Inchul Jung", "Don Chan", "Sushil Shirke", "Seun Kehinde", "Joe Owenson")) %>%
+  count(year, month, Assignee, sort=TRUE) %>% na.omit() %>% 
+  ggplot(aes(n, fct_reorder(Assignee,n), fill=Assignee)) + geom_col(show.legend = FALSE) + facet_wrap(~month) + 
+  labs(x="", 
+       y="",
+       title = "The most assinged person per month (Only Servians)")
+```
+
+
+## Average Resolving Time
+```{r Average Resolving, echo=FALSE, message=FALSE, warning=FALSE}
+
+jira %>% filter (Status == "Done",  year %in% c(2020)) %>%
+  mutate(Duration = difftime(Resolved, Created, units = "days")) %>%
+  ggplot(aes(month, Duration, fill=month)) + 
+  geom_boxplot(show.legend = FALSE, na.rm=TRUE, outlier.shape = NA) +
+  geom_point(aes(y=Duration), alpha=0.2, show.legend = FALSE) + 
+  geom_jitter(show.legend = FALSE) + 
+  facet_wrap(~year) + 
+  labs(x="", y="days", 
+       title = "Resolving trend")
+
+```
+
+```{r}
+
+jira %>% filter (Status == "Done",  year %in% c(2020)) %>%
+  filter(Assignee %in% c("Inchul Jung", "Don Chan", "Sushil Shirke", "Seun Kehinde", "Joe Owenson")) %>%  
+  mutate(Duration = difftime(Resolved, Created, units = "days")) %>%
+  ggplot(aes(month, Duration, fill=month)) + 
+  geom_boxplot(show.legend = FALSE, na.rm=TRUE, outlier.shape = NA) +
+  geom_point(aes(y=Duration), alpha=0.5, show.legend = FALSE) + 
+  geom_jitter(show.legend = FALSE) + 
+  facet_wrap(~year) + 
+  labs(x="", y="days", 
+       title = "Resolving trend")
+
+```
