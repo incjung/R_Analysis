@@ -17,7 +17,8 @@ theme_set(theme_light())
 
 # JIRA
 
-For this JIRA analysis, we extract all JIRA records related to mapr 
+For this JIRA analysis, we extract all JIRA records related to managed_service 
+Data is extracted from jira pages with query engine : ????
 
 ```{r}
 
