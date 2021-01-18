@@ -79,7 +79,7 @@ jira %>%
 #jira count percent per month/year
 jira %>%
   count(year, month) %>%
-  add_count(percent = n/sum(n)) %>%
+  mutate(percent = n/sum(n)) %>%
   ggplot(aes(month, percent)) + 
   geom_col(show.legend = FALSE) +
   scale_y_continuous(labels=scales::percent_format()) +
@@ -143,63 +143,32 @@ jira %>%
 ## JIRA Creators
 ```{r JIRA Creators, eval=FALSE, include=FALSE}
 
-jira %>%
-  filter(year==2020, month==7) %>%
-  mutate(assignee=fct_lump_n(assignee,2)) %>%
-  count(year, month, assignee, sort=TRUE) 
 
 jira %>%
-  group_by (year, month) %>%
-  count(assignee, sort=TRUE) %>%
-  mutate(assignee=fct_lump_n(assignee,2,w=n)) %>%
-  count(assignee, sort=TRUE, wt=n) %>%
-  arrange(year, month)
-
-jira %>%
+#  mutate(assignee=fct_lump_n(assignee,10)) %>%
   count(year, month, assignee, sort=TRUE) %>%
-  mutate(assignee=fct_lump_n(assignee,2,w=n)) %>%
-  count(assignee, sort=TRUE, wt=n) %>% 
-  arrange(year, month)
-## => after "count", it does not have "group" attrubte. 
-
-
-jira %>%
-  group_by (year, month) %>%
-  count(assignee, sort=TRUE) %>%
-  mutate(assignee=fct_lump_n(assignee,2,w=n)) %>%
-  count(assignee, sort=TRUE, wt=n) %>%
-  ggplot(aes(n, fct_reorder(assignee,n), fill=assignee)) + 
+  ggplot(aes(n, fct_reorder(assignee,n,max), fill=assignee)) + 
   geom_col(show.legend = FALSE) +
-  facet_wrap(year~month, scale="free_y") +
+  facet_wrap(year~month) +
   labs(x="", 
        y="",
-       title = "The most assinged person lumped")
+       title = "The most assinged person",
+       subtitle = "cases")
 
 #final output
 
 jira %>%
-  count(year, month, assignee) %>%
+  count(year, month, assignee, sort=TRUE) %>%
   add_count(assignee, wt=n) %>%
-  ggplot(aes(n, fct_reorder(assignee,nn), fill=assignee)) + 
-  geom_col(show.legend = FALSE) + 
+  mutate(percent = n/nn) %>%
+  ggplot(aes(percent, fct_reorder(assignee,percent), fill=assignee)) + 
+  geom_col(show.legend = FALSE) +
+  scale_x_continuous(labels=scales::percent_format()) +
   facet_grid(year~month, scale="free") + 
   labs(x="", 
        y="",
-       title = "The most assinged person per month")
+       title = "The most assinged person over months")
 
-```
-
-```{r}
-jira %>% 
-  filter(assignee %in% c("Inchul Jung", "Don Chan", "Sushil Shirke", "Seun Kehinde", "Joe Owenson")) %>%
-  count(year, month, assignee, sort=TRUE) %>%
-  add_count(assignee, wt=n) %>%
-  ggplot(aes(n, fct_reorder(assignee,nn), fill=assignee)) + 
-  geom_col(show.legend = FALSE) + 
-  facet_wrap(year~month, scale="free") + 
-  labs(x="", 
-       y="",
-       title = "The most assinged person per month (Only Servians)")
 ```
 
 
@@ -247,7 +216,7 @@ team_group %>%
 
 jira %>% 
   filter(status == "Done") %>%
-  filter(assignee %in% c("Inchul Jung", "Don Chan", "Sushil Shirke", "Seun Kehinde", "Joe Owenson")) %>%  
+  filter(assignee %in% servians_user) %>%
   mutate(duration = difftime(resolved, created, units = "days")) %>%
   ggplot(aes(month, duration, fill=month)) + 
   geom_boxplot(show.legend = FALSE, na.rm=TRUE) +
