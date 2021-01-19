@@ -75,6 +75,10 @@ transit_cost_df %>%
 
 
 
+
+some_contry <- transit_cost_df %>% count(code, sort=TRUE) %>% filter(n>10) %>% pull(code)
+
+
 # no good relation 
 
 transit_cost_df %>%
@@ -101,8 +105,6 @@ transit_cost_df <- transit_cost_df %>%
   na.omit() %>% 
   mutate(real_cost = parse_number(real_cost)) 
 
-
-some_contry <- transit_cost_df %>% count(code, sort=TRUE) %>% filter(n>10) %>% pull(code)
 
 
 transit_cost_df %>%
