@@ -1,0 +1,127 @@
+---
+title: "Untitled"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
+https://www.johndcook.com/blog/2011/09/27/bayesian-amazon/
+
+
+```{r}
+tibble(prob = seq(0, 1, length = 100)) %>%
+  mutate (a_seller = dbeta(prob, 91,11),
+          b_seller = dbeta(prob, 3,1)) %>%
+  pivot_longer(cols=a_seller:b_seller, names_to = "seller") %>%
+  ggplot(aes(prob, value, color= seller)) +
+  geom_point()
+  
+```
+
+
+94% positive out of 85,193 reviews
+98% positive out of 20,785 reviews
+99% positive out of 840 reviews
+
+```{r}
+
+a_pos <- round(85193 * 0.94)
+a_neg <- 85193 - a_pos
+
+
+b_pos <- round(20785 * 0.98)
+b_neg <- 20785 - b_pos
+
+c_pos <- round(840 * 0.99)
+c_neg <- 840 - c_pos
+```
+
+```{r}
+
+seller_beta <- tibble(prob = seq(0, 1, length = 100)) %>% 
+  mutate (a_seller = dbeta(prob, 1,1),
+          b_seller = dbeta(prob, 1,1),
+          c_seller = dbeta(prob, 1,1))
+
+seller_beta %>%
+  ggplot(aes(x=prob)) +
+  geom_line(aes(y=a_seller, color="a")) +
+  geom_line(aes(y=b_seller, color="b")) +
+  geom_line(aes(y=c_seller, color="c")) 
+
+
+```
+```{r}
+
+
+seller_beta %>% 
+  mutate (a_seller = dbeta(prob, a_pos+1,a_neg+1),
+          b_seller = dbeta(prob, b_pos+1,b_neg+1),
+          c_seller = dbeta(prob, c_pos+1,c_neg+1)) %>%
+  ggplot(aes(prob, a_seller)) +
+  geom_point()
+  
+
+
+
+seller_beta %>% 
+  mutate (a_seller = dbeta(prob, a_pos+1,a_neg+1),
+          b_seller = dbeta(prob, b_pos+1,b_neg+1),
+          c_seller = dbeta(prob, c_pos+1,c_neg+1)) %>% 
+  pivot_longer(cols=a_seller:c_seller, names_to = "seller") %>%
+  ggplot(aes(x=prob, value, color=seller)) +
+  geom_line() +
+  facet_wrap(seller~., nrow=3, scales="free_y") +
+  theme(legend.position = "none")
+
+
+
+```
+The mean is a/(a+b) and the variance is ab/((a+b)^2 (a+b+1))
+```{r}
+
+df <- tibble(
+  a_mean = a_pos+1 /(a_pos+1 + a_neg+1 ),
+  a_var = (a_pos+1)*(a_neg+1 )/(((a_pos+1)+(a_neg+1))^2*((a_pos+1 + a_neg+1 )+1)),
+  b_mean = b_pos+1 /(b_pos+1 + b_neg+1 ),
+  b_var = (b_pos+1)*(b_neg+1 )/(((b_pos+1)+(b_neg+1))^2*((b_pos+1 + b_neg+1 )+1)),
+  c_mean = c_pos+1 /(c_pos+1 + c_neg+1 ),
+  c_var = (c_pos+1)*(c_neg+1 )/(((c_pos+1)+(c_neg+1))^2*((c_pos+1 + c_neg+1 )+1)))
+
+
+df %>%
+  select(ends_with("mean")) %>%
+  pivot_longer(cols=a_mean:c_mean, names_to = "stat") %>%
+  arrange(desc(value))
+  
+options(scipen = 99)
+  
+df %>%
+  select(ends_with("var")) %>%
+  pivot_longer(cols=a_var:c_var, names_to = "stat") %>%
+  arrange(desc(value)) 
+
+  
+```
+
+
+
+```{r}
+by_seller <- df %>%
+  pivot_longer(cols=everything(), 
+               names_to = c("seller", "stat"), 
+               names_pattern="(.*)_(.*)", 
+               values_to="value") 
+
+by_seller %>%
+  ggplot(aes (seller, value, color=stat)) +
+  geom_point(size = 4, alpha=0.5)  +facet_wrap(stat~., scale="free_y")
+```
+

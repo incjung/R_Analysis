@@ -1,0 +1,233 @@
+---
+title: "ACC Treatment Injury Data"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# ACC Treatment Injury Data
+
+This includes:
+- diagnosis, advice and interventions
+- failure to provide treatment or failure to provide treatment in a timely manner. The injury must have been caused by treatment; but not be a necessary part, or ordinary consequence, of the treatment.
+
+
+## Injury Prevention: Making treatment safer
+The best way to improve treatment safety is for us to work in collaboration with those on the front line. We have six key initiatives that address:
+- surgical safety
+- infection prevention and surveillance
+- pressure injuries
+- medication safety
+- clinical incident reviews
+- brain injuries in newborns.
+
+We've committed a $45 million investment to treatment safety programmes between 2017 and 2022. We work with the Health Quality and Safety Commission (HQSC), the Ministry of Health (MoH), District Health Boards (DHBs) and others to deliver these initiatives. Find out more about the initiatives:
+https://www.acc.co.nz/for-providers/treatment-safety/
+
+To encourage conversations around treatment safety, we've released detailed information on treatment injuries in public and private surgical hospitals.
+https://www.acc.co.nz/assets/provider/2de075da69/supporting-treatment-safety-report-2019.pdf
+
+ACC claims relating to personal injury caused by treatment from, or at the direction of, a registered health professional. This includes: diagnosis, advice and interventions failure to...
+
+# the dataset
+Data Link : 
+ - https://catalogue.data.govt.nz/dataset/acc-treatment-injury-data
+ 
+ 
+Data: 
+
+- Active Treatment Injury Data
+- New Treatment Injury Data
+- Treatment Injury Data
+  * https://catalogue.data.govt.nz/dataset/2e487b2d-3641-49c1-a683-3bd8d4d10a36/resource/2667c8ef-5298-4c18-bbe5-8c7da5f6bea8/download/treatment-injury-claims-dataset.xlsx
+
+
+
+## data loading and cleaning
+```{r}
+library(tidyverse)
+theme_set(theme_light())
+
+#1. Active Treatment Injury Data
+# https://catalogue.data.govt.nz/dataset/acc-treatment-injury-data/resource/a903ed48-5be2-4021-bbd0-6d75aaa52029
+
+active_treatment_injury <- read_csv("https://catalogue.data.govt.nz/dataset/2e487b2d-3641-49c1-a683-3bd8d4d10a36/resource/a903ed48-5be2-4021-bbd0-6d75aaa52029/download/active-treatment-injury-claims.csv")
+
+
+#2. New Treatment Injury Data
+new_treatment_injure <- read_csv("https://catalogue.data.govt.nz/dataset/2e487b2d-3641-49c1-a683-3bd8d4d10a36/resource/b40daa8b-76b6-4810-84e8-d3413feac1e4/download/new-treatment-injury-claims.csv")
+
+# Treatment Injury Data
+
+hd <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="New claims by years", range="B4:J42", col_names=FALSE) %>% 
+  slice(2) %>%
+  as.character()
+
+hd[1] = "features"
+
+new_claims_by_years <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="New claims by years", range="B4:J42", col_names=FALSE) %>%
+  rename_with(~ hd) %>%
+  na.omit() %>%
+  janitor::clean_names()
+
+active_claims_by_years <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B4:J42", col_names=FALSE) %>%
+  rename_with(~ hd) %>%
+  na.omit() %>%
+  janitor::clean_names()
+
+
+active_cost_by_years <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="Active costs by years", range="B4:J42", col_names=FALSE) %>%
+  rename_with(~ hd) %>%
+  na.omit() %>%
+  janitor::clean_names()
+```
+
+### active_treatment_injury
+
+claim case
+```{r}
+active_treatment_injury %>%
+  count(client_ethnicity,client_gender,  sort=TRUE )
+
+active_treatment_injury <- active_treatment_injury %>%
+  mutate(claim_count=parse_number(claim_count)) 
+
+
+active_treatment_injury %>%
+  ggplot(aes(active_financial_year, claim_count, fill=client_gender)) +
+  geom_col() +
+  labs(x="financial year",
+       y="claims",
+       fill="gender",
+       title="total claim cases per year",
+       subtitle = "gender")
+
+#valuate above plot
+active_treatment_injury %>%
+  filter(active_financial_year == "2017/18") %>%
+  summarise(sum = sum(claim_count ))
+
+active_treatment_injury %>%
+  ggplot(aes(active_financial_year, claim_count, fill=client_gender)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x="financial year",
+       y="claims",
+       fill="gender",
+       title="claim cases per year",
+       subtitle = "average")
+
+active_treatment_injury %>%
+  ggplot(aes(active_financial_year, claim_count, fill=client_ethnicity )) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x="financial year",
+       y="claims",
+       fill="ethnicity ",
+       title="claim cases per ethnicity")
+
+#valuate above plot
+active_treatment_injury %>%
+  filter(active_financial_year == "2017/18",
+         client_ethnicity == "Maori") 
+
+
+active_treatment_injury %>%
+  ggplot(aes(age_group, claim_count, fill=client_gender)) +
+  geom_boxplot() +
+  coord_flip() +
+  facet_wrap(client_ethnicity ~., scales = "free_x") +
+  labs(x="",
+       title="claims each ethnicity")
+  
+ 
+```
+
+claim cost
+```{r}
+
+active_treatment_injury %>%
+  ggplot(aes(active_financial_year, total_cost, fill=client_gender)) +
+  geom_col() +
+  scale_y_continuous(labels=scales::dollar_format()) +
+  labs(x="financial year",
+       y="",
+       fill="gender",
+       title="total claim cases per year",
+       subtitle = "gender")
+
+active_treatment_injury %>%
+  ggplot(aes(active_financial_year, total_cost, fill=client_ethnicity )) +
+  geom_boxplot() +
+  scale_y_log10(labels=scales::dollar_format()) +
+  labs(x="financial year",
+       fill="ethnicity ",
+       title="total cost",
+       subtitle="ethnicity")
+
+active_treatment_injury %>%
+  ggplot(aes(age_group, total_cost, fill=client_gender)) +
+  geom_boxplot() +
+  coord_flip() +
+  facet_wrap(client_ethnicity ~., scales = "free_x") +
+  labs(x="",
+       title="cost each ethnicity",
+       fill="gender")
+```
+
+
+### new_treatment_injure
+
+No idea - what is different with *active_treatment_injury* except no cost column
+
+```{r}
+new_treatment_injure <- new_treatment_injure %>%
+  mutate(claim_count=parse_number(claim_count)) 
+
+
+
+new_treatment_injure %>%
+  ggplot(aes(cover_decision_financial_year , claim_count, fill=client_gender)) +
+  geom_col() +
+  labs(x="financial year",
+       y="claims",
+       fill="gender",
+       title="total claim cases per year",
+       subtitle = "gender")
+
+new_treatment_injure %>%
+  ggplot(aes(cover_decision_financial_year, claim_count, fill=client_gender)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x="financial year",
+       y="claims",
+       fill="gender",
+       title="claim cases per year",
+       subtitle = "average")
+
+
+```
+
+
+### active_claims_by_years (excel file)
+
+```{r}
+active_claims_by_years <- active_claims_by_years %>%
+  mutate_at(vars(-features), as.numeric)
+
+active_df <- active_claims_by_years %>%
+  pivot_longer(!features, names_to="year", values_to="value") 
+
+pivot_df <- active_df %>%
+  pivot_wider(names_from=features, values_from = value) 
+
+pivot_df %>% select (Female) %>%
+  mutate(Female,(Female))
+
+  
+```
+
