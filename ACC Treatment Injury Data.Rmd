@@ -265,10 +265,49 @@ by_compare_active %>%
 ```
 
 
-### Injure Type
+### Injure Type and Treatment 
 ```{r}
 
 
-active_claims_by_years
+injury_ty <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B31:J42", col_names=FALSE) %>%
+  rename_with(~ hd) %>%
+  na.omit() %>%
+  janitor::clean_names()
+
+Treat_facility <- readxl::read_excel(path="C:/Users/InchulJung/Downloads/treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B26:J29", col_names=FALSE) %>%
+  rename_with(~ hd) %>%
+  na.omit() %>%
+  janitor::clean_names()
+	
+
+
+injury_ty %>%
+  pivot_longer(!features, names_to="year", values_to="value") %>%
+  mutate(year= str_replace(year,"_", "/"),
+         year= str_replace(year,"x", "")) %>%
+  arrange(year) %>%
+  mutate(features=reorder(features, value,max)) %>%
+  ggplot(aes(year, value, color=features, group=features)) +
+  geom_line(aes(linetype=features), size=1)  +
+  #geom_point(aes(shape=features)) +
+  scale_y_log10() +
+  labs(x="",
+       y="",
+       title="Injury Type")
+  
+
+
+Treat_facility %>%
+  pivot_longer(!features, names_to="year", values_to="value") %>%
+  mutate(year= str_replace(year,"_", "/"),
+         year= str_replace(year,"x", "")) %>%
+  mutate(features=reorder(features, value,max)) %>%
+  ggplot(aes(year, value, color=features, group=features)) +
+  geom_line(aes(linetype=features), size=1) +
+  labs(title="Treatment Facility",
+       x="",
+       y="")
+
+  
 ```
 

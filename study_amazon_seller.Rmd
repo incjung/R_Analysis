@@ -5,7 +5,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-This post is about Amazone seller choice. This main idea is from this [post](https://www.johndcook.com/blog/2011/09/27/bayesian-amazon/)
+This post is about Amazon seller choice. This main idea is from this [post](https://www.johndcook.com/blog/2011/09/27/bayesian-amazon/)
 
 Let's say we know sellers like 
 
@@ -104,7 +104,6 @@ df %>%
   select(ends_with("var")) %>%
   pivot_longer(cols=a_var:c_var, names_to = "stat") %>%
   arrange(desc(value)) 
-
   
 ```
 
