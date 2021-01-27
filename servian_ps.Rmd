@@ -2,7 +2,7 @@
 title: "servian_ps"
 output: html_document
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +15,8 @@ library(janitor)
 
 theme_set(theme_minimal())
 servian_ps <- read_csv("servian_ps.csv")
+
+servian_tech <- read_csv("Servian_Consultant_directory.csv")
 ```
 
 
@@ -23,8 +25,13 @@ servian_ps <- servian_ps  %>%
   clean_names() %>%
   mutate(customer_name = str_to_title(customer_name))
 
+servian_tech <- servian_tech %>%
+  clean_names()
+
 ```
 
+
+## servian pillar
 ```{r eval=FALSE, include=FALSE}
 servian_ps %>% 
   count(customer_name) %>%
@@ -54,17 +61,17 @@ servian_ps %>%
 servian_ps %>% 
   add_count(customer_name) %>%
   filter(!str_detect(pillars,"GOV")) %>%
-  ggplot(aes(x=n, y=fct_reorder(customer_name,-n))) + 
-  geom_col(fill="firebrick") +
+  ggplot(aes(x=n, y=fct_reorder(customer_name,n,last))) + 
+  geom_col(width=0.9, fill="firebrick") +
   facet_wrap(~pillars, scale="free") +
   labs(x="", y="",
        subtitle=servian_ps %>% distinct(pillars) %>% pull() %>% str_c( collapse = ", ")) +
   theme (axis.text.x=element_blank(),
-         axis.text.y=element_text(size=50),
+         #axis.text.y=element_text(size=50),
          panel.grid = element_blank(),
          strip.background = element_rect(colour = "black", fill = "white"),
-         strip.text = element_text(color="black", size=60),
-         plot.subtitle = element_text(face="bold", size=80),
+         #strip.text = element_text(color="black", size=60),
+         #plot.subtitle = element_text(face="bold", size=80),
          )
 ```
 
@@ -84,6 +91,9 @@ servian_ps %>%
   theme(axis.text.x = element_text(angle=90, hjust = 1),
         axis.text.y=element_blank(),
         panel.grid = element_blank())
+
+
+
 ```
 
 
@@ -92,19 +102,64 @@ servian_ps %>%
 ```{r}
 servian_ps %>%
   count(pillars, sort=TRUE) %>%
-  ggplot(aes(x=n, y=fct_reorder(pillars,n))) + 
-  geom_col(fill="firebrick", color="grey90") +
-  #coord_cartesian(ylim=c(0.5,20))  +
+  ggplot(aes(x=n, y=fct_reorder(pillars,n), fill=pillars)) + 
+  geom_col(color="grey90") +
+  scale_x_continuous(labels=c(1,20), breaks = c(1,20)) +
   labs(x="",
        y="",
        title="Servian Service Pillars") +
-  theme(#axis.text.x = element_text(angle=90, hjust = 1),
-        axis.text.x=element_blank(),
-        panel.grid = element_blank())
+  theme(legend.position = "none")
+
+library(ggrepel)
+
+servian_ps %>%
+  count(pillars, sort=TRUE) %>%
+  ggplot(aes(x=fct_reorder(pillars,n),y=n, fill=pillars)) + 
+  geom_col() +
+  coord_polar() +
+  geom_text_repel(aes(label=if_else(n>5, str_c(pillars, "\n(", n, ")" ), pillars)), hjust=1, vjust=1) +
+  labs(x="",
+       y="",
+       title="Servian Pillars") +
+  theme(axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "none")
+
 
 ```
 
 
+
+## servian tech tree
+
+```{r}
+servian_tech %>%
+  pivot_longer(cols=aware:expert, names_to="confidence", values_to="score") %>%
+  ggplot(aes(x=confidence , y=category)) +
+  geom_tile(aes(width=1, fill=score)) +
+  scale_fill_gradient(low = "blue", high = "yellow") +
+  geom_text(aes(label=score))
+
+
+
+
+servian_tech %>%
+  select(-skilled) %>%
+  pivot_longer(cols=aware:expert, names_to="confidence", values_to="count") %>%
+  group_by (category, confidence) %>%
+  summarise(m_score=round(mean(count)), t_score=sum(count)) %>%
+  ggplot(aes(x=confidence , y=fct_reorder(category, m_score))) +
+  geom_tile(aes(fill=m_score)) +
+  scale_fill_gradient2(low = "yellow", high = "red", midpoint =50) +
+  geom_text(aes(label=m_score), alpha=0.3) +
+  labs(x="",
+       y="skill category",
+       fill="average #",
+       title="Servian skillset (people)") +
+  theme(axis.text.x=element_text(face="bold"),
+        axis.text.y=element_text(face="bold"))
+```
 
 
 
