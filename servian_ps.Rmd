@@ -9,12 +9,11 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r include=FALSE}
 library(tidyverse)
 library(janitor)
 
 theme_set(theme_minimal())
-
 servian_ps <- read_csv("servian_ps.csv")
 ```
 
@@ -26,19 +25,31 @@ servian_ps <- servian_ps  %>%
 
 ```
 
-```{r echo=FALSE}
+```{r eval=FALSE, include=FALSE}
 servian_ps %>% 
   count(customer_name) %>%
   ggplot(aes(x=n, y=fct_reorder(customer_name,n))) + 
   geom_col(fill="firebrick", color="grey90") +
-  coord_cartesian(xlim=c(1,6))  +
   labs(x="", y="",
        title="# customer") +
   theme (panel.grid = element_blank(),
          axis.text.x=element_blank())
 ```
 
+
+```{r}
+
+# Data Example
+
+servian_ps %>%
+  slice(1:5) %>%
+  knitr::kable()
+```
+
+
 ```{r, fig.width=100, fig.height=60}
+
+# group by pillar
 
 servian_ps %>% 
   add_count(customer_name) %>%
@@ -59,6 +70,9 @@ servian_ps %>%
 
 
 ```{r}
+
+# show pillars
+
 servian_ps %>%
   count(pillars, sort=TRUE) %>%
   ggplot(aes(x=fct_reorder(pillars,-n), y=n)) + 
