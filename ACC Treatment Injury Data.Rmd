@@ -1,7 +1,9 @@
 ---
 title: "ACC Treatment Injury Data"
-output: html_document
-editor_options: 
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -58,6 +60,7 @@ Active claims :	A claim that is open and has received a payment in that financia
 
 ```{r}
 library(tidyverse)
+library(readxl)
 theme_set(theme_light())
 
 #1. Active Treatment Injury Data
@@ -107,7 +110,7 @@ During this part, I have learned some functions in R. :)
 
 
 
-```{r}
+```{r fig.width=600, fig.height=300 }
 
 gender_ty <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B7:J8", col_names=FALSE) %>% 
   janitor::clean_names()
@@ -333,85 +336,85 @@ by_compare_active %>%
 ```
 
 
-### Injure Type and Treatment 
+### Injure Type and Treatment
 ```{r}
 
 
-injury_ty <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B31:J42", col_names=FALSE) %>%
-  rename_with(~ hd) %>%
-  na.omit() %>%
-  janitor::clean_names()
+# injury_ty <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B31:J42", col_names=FALSE) %>%
+#   rename_with(~ hd) %>%
+#   na.omit() %>%
+#   janitor::clean_names()
+# 
+# Treat_facility <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B26:J29", col_names=FALSE) %>%
+#   rename_with(~ hd) %>%
+#   na.omit() %>%
+#   janitor::clean_names()
+# 
+# 
+# 
+# injury_ty %>%
+#   pivot_longer(!features, names_to="year", values_to="value") %>%
+#   mutate(year= str_replace(year,"_", "/"),
+#          year= str_replace(year,"x", "")) %>%
+#   arrange(year) %>%
+#   mutate(features=reorder(features, value,max)) %>%
+#   ggplot(aes(year, value, color=features, group=features)) +
+#   geom_line(aes(linetype=features), size=1)  +
+#   #geom_point(aes(shape=features)) +
+#   scale_y_log10() +
+#   labs(x="",
+#        y="",
+#        title="Injury Type")
+# 
+# 
+# 
+# Treat_facility %>%
+#   pivot_longer(!features, names_to="year", values_to="value") %>%
+#   mutate(year= str_replace(year,"_", "/"),
+#          year= str_replace(year,"x", "")) %>%`
+#   mutate(features=reorder(features, value,max)) %>%
+#   ggplot(aes(year, value, color=features, group=features)) +
+#   geom_line(aes(linetype=features), size=1) +
+#   labs(title="Treatment Facility",
+#        x="",
+#        y="")
 
-Treat_facility <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B26:J29", col_names=FALSE) %>%
-  rename_with(~ hd) %>%
-  na.omit() %>%
-  janitor::clean_names()
-	
 
-
-injury_ty %>%
-  pivot_longer(!features, names_to="year", values_to="value") %>%
-  mutate(year= str_replace(year,"_", "/"),
-         year= str_replace(year,"x", "")) %>%
-  arrange(year) %>%
-  mutate(features=reorder(features, value,max)) %>%
-  ggplot(aes(year, value, color=features, group=features)) +
-  geom_line(aes(linetype=features), size=1)  +
-  #geom_point(aes(shape=features)) +
-  scale_y_log10() +
-  labs(x="",
-       y="",
-       title="Injury Type")
-  
-
-
-Treat_facility %>%
-  pivot_longer(!features, names_to="year", values_to="value") %>%
-  mutate(year= str_replace(year,"_", "/"),
-         year= str_replace(year,"x", "")) %>%`
-  mutate(features=reorder(features, value,max)) %>%
-  ggplot(aes(year, value, color=features, group=features)) +
-  geom_line(aes(linetype=features), size=1) +
-  labs(title="Treatment Facility",
-       x="",
-       y="")
-
-  
 ```
 
 # some data treat
 
 ```{r}
 
-active_claims_by_years %>%
-  pivot_longer(!features, names_to="year", values_to="value") %>%
-  pivot_wider(names_from = features, values_from=value ) %>%
-  unnest(c(Female, Male, `00 to 09 Years of age`, `10 to 19 Years of age`, 
-    `20 to 29 Years of age`, `30 to 39 Years of age`, `40 to 49 Years of age`, 
-    `50 to 59 Years of age`, `60 to 69 Years of age`, `70 to 79 Years of age`, 
-    `80 Years and older`, `M<U+0101>ori`, `Pacific Peoples`, 
-    Asian, European, Other, DHB, `Private Hospital`, `General Practice`, 
-    `Infections following surgical procedures`, `Line infections`, 
-    `Other infections`, `Pressure injuries`, `Medication adverse reactions`, 
-    `Pulmonary embolism`, `Deep vein thrombosis`, `Medication errors`, 
-    `Neonatal encephalopathy`, `Equipment failure`, `Treatment omission`, 
-    `Surgical mesh`))
+# active_claims_by_years %>%
+#   pivot_longer(!features, names_to="year", values_to="value") %>%
+#   pivot_wider(names_from = features, values_from=value ) %>%
+#   unnest(c(Female, Male, `00 to 09 Years of age`, `10 to 19 Years of age`,
+#     `20 to 29 Years of age`, `30 to 39 Years of age`, `40 to 49 Years of age`,
+#     `50 to 59 Years of age`, `60 to 69 Years of age`, `70 to 79 Years of age`,
+#     `80 Years and older`, `M<U+0101>ori`, `Pacific Peoples`,
+#     Asian, European, Other, DHB, `Private Hospital`, `General Practice`,
+#     `Infections following surgical procedures`, `Line infections`,
+#     `Other infections`, `Pressure injuries`, `Medication adverse reactions`,
+#     `Pulmonary embolism`, `Deep vein thrombosis`, `Medication errors`,
+#     `Neonatal encephalopathy`, `Equipment failure`, `Treatment omission`,
+#     `Surgical mesh`))
 
-active_claims_by_years %>%
-  pivot_longer(!features, names_to="year", values_to="value") %>%
-  pivot_wider(names_from = features, values_from=value ) %>%
-  unnest(c(-year)) 
+# active_claims_by_years %>%
+#   pivot_longer(!features, names_to="year", values_to="value") %>%
+#   pivot_wider(names_from = features, values_from=value ) %>%
+#   unnest(c(-year))
 
 ```
 
-- *map* function 
+- *map* function
 - *across* function
 - *where* function
 - *str_glue* function
 
 ```{r}
 
-gender_ty <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B7:J8", col_names=FALSE) %>% 
+gender_ty <- readxl::read_excel(path="treatment-injury-claims-dataset.xlsx", sheet="Active claims by years", range="B7:J8", col_names=FALSE) %>%
   janitor::clean_names()
 
 
@@ -431,18 +434,18 @@ df <- gender_ty %>%
   mutate(group = "gender") %>%
   bind_rows(
     age_ty %>%
-      mutate(group="age"), 
+      mutate(group="age"),
     ethnicity_ty %>%
       mutate(group="ethnicity"),
     treatfacility_ty %>%
       mutate(group = "treatment facilty"),
     injury_ty %>%
-      mutate(group = "ingury")) 
+      mutate(group = "ingury"))
 
 
 h_name<- c("feature", map_chr(seq(2010, 2017), ~ str_glue("{.x}-{.x+1}")), "group")
 
-df <- df %>%  
+df <- df %>%
   rename_with(~ h_name) %>%
   janitor::clean_names()
 
@@ -461,6 +464,6 @@ df %>% group_by(group) %>%
        y="") +
   theme(legend.title = element_blank(),
         axis.text.x= element_text(angle=90))
-  
+
 ```
 
