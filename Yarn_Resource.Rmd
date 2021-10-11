@@ -27,18 +27,22 @@ raw_json <- jsonlite::fromJSON("rm.json")
 ```
 
 ```{r}
-app_jobs <- pluck(raw_json, 'apps', 'app')
+app_jobs <- pluck(raw_json, 'apps', 'app') %>%
+  as_tibble() %>% 
+  select (id, user, name,queue, state, finalStatus, startedTime, finishedTime, elapsedTime, allocatedVCores, allocatedMB)
 
-options(scipen=10)
+#options(scipen=10)
 
-app_jobs %>% 
-  as_tibble() %>%
-  select (id, user, name, state, finalStatus, startedTime, finishedTime, elapsedTime, allocatedVCores, allocatedMB) %>%
+app_jobs  %>%
   mutate (new= (finishedTime - startedTime)) %>%
+  mutate(user=fct_reorder(user, desc(elapsedTime))) %>%
   ggplot(aes(x=user, y=elapsedTime, color=user)) +
   geom_boxplot() +
-  scale_y_log10() +
-  labs(title="each user job time",
+  geom_point() +
+  coord_flip() +
+  scale_y_log10(label=scales::comma_format(), limits=c(1000,NA)) +
+  #scale_y_continuous(label=comma_format()) +
+  labs(title="job time variance",
     y="")
 
 ```
@@ -46,12 +50,57 @@ app_jobs %>%
 ```{r}
 app_jobs %>% 
   as_tibble() %>%
-  select (id, user, name,queue, state, finalStatus, startedTime, finishedTime, elapsedTime, allocatedVCores, allocatedMB) %>%
-  mutate (new= (finishedTime - startedTime)) %>%
   ggplot(aes(x=user, y=elapsedTime, color=user)) +
   geom_boxplot() +
-  scale_y_log10() +
+  scale_y_log10(label=comma_format()) +
   facet_grid(queue~state)
 
 ```
+
+
+```{r}
+library(lubridate)
+
+app_jobs %>%
+  select(startedTime, finishedTime, elapsedTime,allocatedVCores,user) %>%
+  mutate(startedTime= lubridate::as_datetime(startedTime/1000),
+         finishedTime= lubridate::as_datetime(finishedTime/1000),
+         elapsedTime= lubridate::as_datetime(elapsedTime/1000),
+         date=lubridate::as_date(startedTime)) %>%
+  count(date,user) %>%
+  ggplot(aes(x=date, y=n, color=user)) +
+  geom_line() +
+  labs(y="job #", 
+       title="job # over date")
+
+```
+
+```{r}
+app_jobs %>%
+  select(startedTime, finishedTime, elapsedTime,allocatedVCores,user) %>%
+  mutate(startedTime= lubridate::as_datetime(startedTime/1000),
+         finishedTime= lubridate::as_datetime(finishedTime/1000),
+         elapsedTime= lubridate::as_datetime(elapsedTime/1000),
+         date=lubridate::as_date(startedTime)) %>%
+  group_by(date, user) %>%
+  filter(allocatedVCores != -1)
+```
+
+
+```{r}
+app_jobs %>%
+  select(startedTime, finishedTime, elapsedTime,allocatedVCores,user) %>%
+  mutate(startedTime= lubridate::as_datetime(startedTime/1000),
+         finishedTime= lubridate::as_datetime(finishedTime/1000),
+         elapsedTime= lubridate::as_datetime(elapsedTime/1000),
+         date=lubridate::as_date(startedTime),
+         sec = seconds(elapsedTime)) %>%
+  group_by(date,user, avb_sec=mean(sec)) %>%
+  ggplot(aes(date,avb_sec,color=user)) +
+  geom_line() +
+  scale_y_time() +
+  labs(y="average second")
+  
+```
+
 
