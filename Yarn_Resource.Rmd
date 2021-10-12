@@ -31,7 +31,14 @@ app_jobs <- pluck(raw_json, 'apps', 'app') %>%
   as_tibble() %>% 
   select (id, user, name,queue, state, finalStatus, startedTime, finishedTime, elapsedTime, allocatedVCores, allocatedMB)
 
+
+app_jobs %>%
+  count(state)
+
+ 
 #options(scipen=10)
+
+
 
 app_jobs  %>%
   mutate (new= (finishedTime - startedTime)) %>%
@@ -53,7 +60,8 @@ app_jobs %>%
   ggplot(aes(x=user, y=elapsedTime, color=user)) +
   geom_boxplot() +
   scale_y_log10(label=comma_format()) +
-  facet_grid(queue~state)
+  #geom_text(aes(label=id)) +
+  facet_grid(queue~state) 
 
 ```
 
@@ -101,6 +109,19 @@ app_jobs %>%
   scale_y_time() +
   labs(y="average second")
   
+```
+```{r}
+app_jobs %>%
+  select(startedTime, finishedTime, elapsedTime,allocatedVCores,user,state) %>%
+  mutate(startedTime= lubridate::as_datetime(startedTime/1000),
+         date=lubridate::as_date(startedTime)
+         ) %>%
+  count(date,state) %>%
+  ggplot(aes(date,n,color=state)) +
+  geom_line() +
+  scale_x_time() +
+  labs(y="average second")
+
 ```
 
 
